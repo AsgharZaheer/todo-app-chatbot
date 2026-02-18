@@ -208,3 +208,340 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+---
+
+## Phase III Auto-Enforced Skills
+
+The following skills are ALWAYS ACTIVE. They trigger automatically — no manual invocation required.
+
+### Skill: phase3-sdd-orchestrator (Workflow Enforcement)
+
+**Auto-activates when:**
+- A new Phase III feature is requested
+- MCP tools are modified
+- Chat behavior changes
+- Agent logic is introduced
+- Any backend/frontend coding is about to start
+
+**Gate Checks — MUST pass before any code is written:**
+
+| Gate | Required Artifact | Command to Fix | Blocker |
+|------|-------------------|----------------|---------|
+| Spec Gate | `specs/<feature>/spec.md` | `/sp.specify` | No code without spec |
+| Plan Gate | `specs/<feature>/plan.md` | `/sp.plan` | No code without plan |
+| Task Gate | `specs/<feature>/tasks.md` | `/sp.tasks` | No code without tasks |
+
+**Enforcement behavior:**
+1. Before generating ANY implementation code, check all three gates.
+2. If any gate fails, STOP and respond with:
+   ```
+   🚫 SDD Gate Violation: <gate-name>
+   Required artifact missing: <artifact-path>
+   Action: Run `<command>` before proceeding.
+   Implementation blocked until all gates pass.
+   ```
+3. Only proceed to implementation via `/sp.implement` after all gates pass.
+4. After implementation: validate against acceptance criteria, create PHR, suggest ADR if needed.
+
+**Phase III specific — also verify:**
+- MCP tool contracts defined in spec before implementation
+- Agent runtime configuration documented in plan
+- Chat API endpoint contracts specified
+- Backend statelessness guarantee documented
+- Database schema changes defined with migration strategy
+
+---
+
+### Skill: mcp-contract-guardian (MCP Compliance Enforcement)
+
+**Auto-activates when:**
+- MCP server code is generated or modified
+- AI Agent invokes tools
+- Task-related logic is added
+- Database operations are introduced
+- Chat endpoint connects to business logic
+
+**RULE 1 — MCP IS THE ONLY EXECUTION LAYER**
+Reject any implementation where:
+- ❌ FastAPI directly modifies database
+- ❌ Agent writes SQL queries
+- ❌ Services bypass MCP tools
+- ❌ Business logic exists outside MCP handlers
+
+All task mutations MUST go through: `add_task`, `list_tasks`, `complete_task`, `delete_task`, `update_task`
+
+**RULE 2 — STRICT TOOL SCHEMA VALIDATION**
+Every MCP tool MUST define:
+- Explicit input schema
+- Explicit output schema
+- Deterministic response format
+- Required `user_id` scoping
+- Clear error handling contract
+
+Reject: dynamic parameters, missing required fields, unstructured responses.
+
+**RULE 3 — STATELESSNESS ENFORCEMENT**
+Tools MUST:
+- NOT store memory
+- NOT rely on session state
+- Always read/write from Neon PostgreSQL
+- Run independently per request
+
+**RULE 4 — AGENT TOOL USAGE ONLY**
+OpenAI Agent MUST:
+- Call MCP tools as external actions
+- Never embed business logic
+- Never infer DB structure
+- Never perform CRUD directly
+
+**RULE 5 — SECURITY BOUNDARY**
+- Every tool filters by `user_id`
+- No cross-user data leakage possible
+- No raw SQL exposed to agent layer
+
+**RULE 6 — CONTRACT TRACEABILITY**
+Each MCP tool must map to: `Spec → Plan → Task → Implementation`
+If traceability missing → block execution and request correction.
+
+**Required architecture flow:**
+```
+Agent → MCP Tool → Database    ✅ CORRECT
+Agent → Database               ❌ BLOCKED
+```
+
+**On violation, respond with:**
+```
+🚫 MCP Contract Violation Detected
+Rule: <RULE_NUMBER> — <RULE_NAME>
+Violation: <description>
+Location: <file:line>
+Required: Agent → MCP Tool → Database
+Found: <violating path>
+Action: STOP implementation and correct architecture.
+```
+
+---
+
+### Skill: stateless-conversation-enforcer (Statelessness Enforcement)
+
+**Auto-activates when:**
+- Chat endpoint is implemented or modified
+- Conversation logic is added
+- Agent runner is configured
+- Message persistence is introduced
+- Any caching or session handling appears
+
+**RULE 1 — NO SERVER MEMORY**
+Reject any use of:
+- ❌ In-memory conversation storage
+- ❌ Global variables holding chat history
+- ❌ Session-based storage
+- ❌ Runtime state persistence
+
+Server must forget everything after each request.
+
+**RULE 2 — DATABASE IS THE SINGLE SOURCE OF TRUTH**
+Every request must:
+1. Fetch conversation from database
+2. Build message array for Agent
+3. Execute agent run
+4. Store assistant response back to database
+
+Conversation must be reconstructable purely from DB records.
+
+**RULE 3 — REQUEST-INDEPENDENT EXECUTION**
+Each API call must work in isolation. System must support:
+- Server restarts without data loss
+- Horizontal scaling
+- Load-balanced routing
+- Reproducible requests
+
+**RULE 4 — NO HIDDEN CONTEXT PASSING**
+Disallow:
+- ❌ Passing prior messages through backend memory
+- ❌ Agent instances reused across requests
+- ❌ Cached tool outputs
+
+Each run must rebuild context explicitly.
+
+**RULE 5 — STRICT MESSAGE PERSISTENCE MODEL**
+Validate existence of:
+- `conversations` table (session container)
+- `messages` table (chat history)
+
+Every user message and assistant reply MUST be saved before response is returned.
+
+**RULE 6 — IDEMPOTENT CHAT ENDPOINT**
+POST /chat must behave like a pure function:
+`Input + DB State → Deterministic Output`
+No hidden side effects allowed.
+
+**Required stateless request lifecycle:**
+```
+Client → POST /chat (stateless) → Fetch history from DB → Build messages[] → Agent.run() (one-shot) → MCP Tools → DB → Save reply to DB → Return JSON
+```
+
+**Anti-patterns to detect and reject:**
+
+| Anti-Pattern | Example | Fix |
+|---|---|---|
+| Global chat history | `chat_history = []` at module level | Fetch from DB per request |
+| Session store | `request.session["messages"]` | Use conversation_id + DB |
+| Agent reuse | `agent = Agent()` stored globally | Create new agent runner per request |
+| Cached context | `@lru_cache` on conversation fetch | Always read fresh from DB |
+| Memory append | `messages.append()` across requests | Build messages[] fresh each request |
+
+**On violation, respond with:**
+```
+🚫 Statelessness Violation Detected
+Rule: <RULE_NUMBER> — <RULE_NAME>
+Violation: <description>
+Location: <file:line>
+Required: DB-driven stateless request cycle
+Found: <violating pattern>
+Action: STOP implementation. Remove server-side state and persist to database.
+```
+
+---
+
+### Skill: agent-tool-alignment-guard (Agent Behavior Enforcement)
+
+**Auto-activates when:**
+- Agent instructions are written
+- Tool definitions are registered
+- Prompt engineering is updated
+- Chat responses are generated
+- Natural language parsing is introduced
+
+**RULE 1 — NO DIRECT ANSWERS FOR TASK ACTIONS**
+If user intent involves task management:
+- ❌ Agent must NOT respond conversationally without a tool call
+- ✔ Agent MUST call an MCP tool first, then respond based on result
+
+**RULE 2 — INTENT → TOOL MAPPING REQUIRED**
+
+| User Intent | Required MCP Tool |
+|---|---|
+| create / add | `add_task` |
+| list / show / get | `list_tasks` |
+| complete / done / finish | `complete_task` |
+| delete / remove | `delete_task` |
+| update / change / edit | `update_task` |
+
+No alternative execution paths allowed.
+
+**RULE 3 — TOOL CALL BEFORE RESPONSE**
+Agent workflow: Understand intent → Invoke MCP tool → Receive result → Generate confirmation.
+Never respond before tool execution.
+
+**RULE 4 — NO SYNTHETIC DATA**
+- ❌ Mocked tasks
+- ❌ Generated IDs
+- ❌ Assumed database results
+
+All outputs must originate from MCP tool responses.
+
+**RULE 5 — MULTI-STEP OPERATIONS MUST CHAIN TOOLS**
+Ambiguous references require tool composition:
+e.g., "Delete the meeting task" → `list_tasks` → identify → `delete_task`
+
+**RULE 6 — FRIENDLY RESPONSE AFTER REAL ACTION**
+After tool execution, confirm in natural language grounded in tool result.
+e.g., "Your task 'Buy groceries' has been created."
+
+**RULE 7 — ERROR HANDLING THROUGH TOOL RESULTS**
+If tool fails, explain using the returned error — never invent recovery or fake success.
+
+**Required agent flow:**
+```
+User Message → Parse Intent → Map to MCP Tool → Execute Tool → Tool Result → Friendly Response → Return to User
+```
+
+**Blocked patterns:**
+- ❌ `User Message → Agent responds directly (no tool call)`
+- ❌ `User Message → Agent generates fake data`
+- ❌ `User Message → Agent assumes DB result`
+- ❌ `User Message → Agent skips tool, says "Done!"`
+
+**On violation, respond with:**
+```
+🚫 Agent-Tool Alignment Violation Detected
+Rule: <RULE_NUMBER> — <RULE_NAME>
+Violation: <description>
+Location: <file:line or agent instruction>
+Required: Intent → MCP Tool → Response
+Found: <violating pattern>
+Action: STOP implementation. Ensure all task actions route through MCP tools.
+```
+
+---
+
+### Skill: stateless-db-consistency-guard (DB Consistency Enforcement)
+
+**Auto-activates when:**
+- FastAPI routes are implemented
+- Database models are modified
+- MCP tools interact with persistence layer
+- Conversation handling is introduced
+- Any session/state logic is written
+
+**RULE 1 — NO IN-MEMORY STATE**
+Disallow:
+- ❌ Python dictionaries storing conversations
+- ❌ Global variables tracking tasks
+- ❌ Cached chat history
+- ❌ Temporary state managers
+
+All state MUST be read from database per request.
+
+**RULE 2 — EACH REQUEST IS INDEPENDENT**
+Every `/api/{user_id}/chat` call must:
+1. Fetch conversation history from DB
+2. Build agent context dynamically
+3. Execute tools
+4. Persist new messages
+5. Return response — server forgets everything
+
+**RULE 3 — DATABASE IS SINGLE SOURCE OF TRUTH**
+All entities must exist only in database tables: `tasks`, `conversations`, `messages`.
+No mirrored models or shadow copies allowed.
+
+**RULE 4 — MCP TOOLS MUST BE STATELESS**
+Each MCP tool must: open its own DB session → perform operation → commit → close session.
+Tools must NOT rely on previously loaded objects.
+
+**RULE 5 — NO SESSION STORAGE**
+Forbidden: `request.session`, `@lru_cache` on queries, singleton repositories, background state trackers.
+System must remain restart-safe.
+
+**RULE 6 — RESTART RESILIENCE**
+After server restart: conversations resume, tasks remain accessible, no behavioral change.
+
+**RULE 7 — DATABASE TRANSACTIONS REQUIRED**
+Every write operation must: use transaction scope, commit explicitly, handle rollback on failure.
+
+**Anti-patterns to detect:**
+
+| Anti-Pattern | Code Example | Fix |
+|---|---|---|
+| Global dict state | `tasks_cache = {}` | Query DB per request |
+| Module-level list | `conversations = []` | Fetch from DB |
+| Cached DB results | `@lru_cache` on queries | Always query fresh |
+| Singleton repo | `class TaskRepo: _instance` | Use dependency injection |
+| Tool object reuse | `tool.last_result` | Stateless tool per call |
+
+**On violation, respond with:**
+```
+🚫 Stateless DB Consistency Violation Detected
+Rule: <RULE_NUMBER> — <RULE_NAME>
+Violation: <description>
+Location: <file:line>
+Anti-Pattern: <matched pattern>
+Required: All state in DB, zero server memory
+Found: <violating pattern>
+Action: STOP implementation. Move state to database and remove in-memory storage.
+```
+
+**Fail condition:** If any feature depends on server memory → BLOCK implementation immediately.
+**Success condition:** Server can be shut down at any moment with ZERO loss of logic or context.

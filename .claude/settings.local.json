@@ -33,7 +33,20 @@
       "Bash(powershell -Command:*)",
       "Bash(git status:*)",
       "Bash(git remote set-url:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx vercel:*)",
+      "Bash(huggingface-cli whoami:*)",
+      "Bash(set:*)",
+      "Bash(hf auth whoami:*)",
+      "Bash(hf auth login:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "WebFetch(domain:openai.github.io)",
+      "WebFetch(domain:pypi.org)",
+      "Bash(wmic process where \"commandline like ''%uvicorn%''\" get processid,commandline)",
+      "Bash(tasklist:*)"
     ]
   }
 }

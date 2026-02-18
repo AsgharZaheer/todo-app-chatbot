@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     jwt_secret: str
     cors_origins: str = "http://localhost:3000"
 
+    # Phase III — AI Chatbot (supports OpenAI or Groq via base_url)
+    openai_api_key: str = ""
+    openai_base_url: str = ""
+    openai_model: str = "gpt-4o-mini"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",")]

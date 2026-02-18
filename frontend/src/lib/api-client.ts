@@ -12,6 +12,7 @@ import type {
   TaskListResponse,
   TaskUpdate,
 } from "../types/task";
+import type { ChatApiResponse } from "../types/chat";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -97,4 +98,30 @@ export async function toggleTask(
   return fetchApi<Task>(`/api/tasks/${id}/toggle`, {
     method: "PATCH",
   });
+}
+
+/** POST /api/{user_id}/chat — Send a chat message to the AI assistant */
+export async function sendChatMessage(
+  userId: string,
+  message: string,
+  conversationId?: string | null
+): Promise<ChatApiResponse> {
+  const token = await getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const resp = await fetch(`${API_URL}/api/${userId}/chat`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      message,
+      conversation_id: conversationId || null,
+    }),
+  });
+
+  return resp.json();
 }

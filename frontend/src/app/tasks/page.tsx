@@ -136,6 +136,16 @@ export default function TasksPage() {
           </span>
         </Link>
         <div className="flex items-center gap-3">
+          <Link
+            href="/chat"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+            style={{
+              background: "var(--accent-primary-light)",
+              color: "var(--accent-primary)",
+            }}
+          >
+            AI Chat
+          </Link>
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white"
             style={{ background: "var(--accent-primary)" }}

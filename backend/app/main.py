@@ -10,7 +10,10 @@ from pydantic import ValidationError
 
 from app.config import settings
 from app.database import create_db_and_tables
+from app.models.conversation import Conversation  # noqa: F401 — register for create_all
+from app.models.message import Message  # noqa: F401 — register for create_all
 from app.routers.auth import router as auth_router
+from app.routers.chat import router as chat_router
 from app.routers.tasks import router as tasks_router
 from app.utils.responses import error_response
 
@@ -23,7 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="Hackathon Todo – Phase 2",
+    title="Hackathon Todo – Phase 3",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -40,6 +43,7 @@ app.add_middleware(
 # Mount routers
 app.include_router(auth_router)
 app.include_router(tasks_router)
+app.include_router(chat_router)
 
 
 # ── Dev-only token endpoint (NOT for production) ──────────────────
