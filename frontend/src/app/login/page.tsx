@@ -57,7 +57,7 @@ export default function LoginPage() {
           </p>
         </div>
         <p className="text-sm text-white/50 relative z-10">
-          Hackathon Todo — Phase 2
+          Hackathon Todo — Phase 3
         </p>
         {/* Decorative circles */}
         <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-white/5" />

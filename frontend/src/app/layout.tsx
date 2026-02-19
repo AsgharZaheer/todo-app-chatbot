@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Taskflow — Smart Task Manager",
-  description: "A beautiful full-stack task management application",
+  title: "Taskflow — AI-Powered Task Manager",
+  description: "A full-stack task management app with AI chatbot, built with Next.js, FastAPI, and Groq AI",
 };
 
 export default function RootLayout({

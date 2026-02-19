@@ -59,7 +59,7 @@ export default function Home() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Full-Stack Todo Application — Phase 2
+            Full-Stack Todo Application — Phase 3
             Created by [Asghar Zaheer]
           </div>
 
@@ -78,7 +78,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg sm:text-xl leading-relaxed mb-10 max-w-xl mx-auto" style={{ color: "var(--text-secondary)" }}>
-            Create, organize, prioritize, and track your tasks with an intuitive interface. Built with Next.js, FastAPI, and Neon PostgreSQL.
+            Create, organize, prioritize, and track your tasks with an intuitive interface. Now with AI-powered chatbot! Built with Next.js, FastAPI, Neon PostgreSQL, and Groq AI.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
@@ -102,11 +102,12 @@ export default function Home() {
           </div>
 
           {/* Feature cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               { icon: "M12 6v6m0 0v6m0-6h6m-6 0H6", title: "Create & Organize", desc: "Tasks with titles, descriptions, priorities, tags, and due dates" },
               { icon: "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z", title: "Smart Filtering", desc: "Filter by status, priority, or tags to focus on what matters" },
               { icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", title: "Track Progress", desc: "Toggle completion, see stats, and monitor your productivity" },
+              { icon: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z", title: "AI Chatbot", desc: "Manage tasks using natural language with our AI-powered chat assistant" },
             ].map((f, i) => (
               <div
                 key={f.title}
@@ -135,7 +136,7 @@ export default function Home() {
       </main>
 
       <footer className="text-center py-5 text-sm" style={{ color: "var(--text-muted)" }}>
-        Hackathon Todo — Phase 2 | Next.js + FastAPI + Neon PostgreSQL
+        Hackathon Todo — Phase 3 | Next.js + FastAPI + Neon PostgreSQL + Groq AI
       </footer>
     </div>
   );
